@@ -1,0 +1,27 @@
+---
+version: '3.9'
+
+x-default-logging: &logging
+  driver: "json-file"
+  options:
+    max-size: "5m"
+    max-file: "2"
+
+services:
+  mariadb:
+    image: mariadb:11.3.2
+    environment:
+      - MARIADB_ROOT_PASSWORD=rootpwd
+      - MARIADB_USER=${FW_DB_USER}
+      - MARIADB_PASSWORD=${FW_DB_PASSWORD}
+      - MARIADB_DATABASE=${FW_DB_NAME}
+    healthcheck:
+      test: mysqladmin -u root -prootpwd status
+      interval: 30s
+      timeout: 30s
+      retries: 3
+    volumes:
+      - ./data/mariadb:/var/lib/mysql:Z
+    ports:
+      - "127.0.0.1:3306:3306"
+    logging: *logging
