@@ -21,7 +21,7 @@ FROM node:20.11.0-alpine3.19
 ENV NODE_APP_PATH=/app
 ENV NODE_ENV=production
 
-LABEL name="node-atuin-servr"
+LABEL name="node-atuin-server"
 LABEL description="Atuin node API server"
 
 RUN adduser -D -u 12345 -h /home/nodeapp -s /bin/sh nodeapp && \
