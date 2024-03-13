@@ -23,3 +23,14 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           slug: fluidware-team/natuin
+  lint-dockerfile:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Lint Dockerfile with Hadolint
+        uses: hadolint/hadolint-action@v3.1.0
+  lint-editorconfig:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Lint with editorconfig-checker
+        uses: editorconfig-checker/action-editorconfig-checker@v2.0.0
