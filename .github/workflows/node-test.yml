@@ -1,9 +1,9 @@
-name: lint test build
+name: lint build test
 
 on: push
 
 jobs:
-  lint-test-build:
+  lint-build-test:
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
