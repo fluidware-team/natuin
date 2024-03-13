@@ -2,6 +2,9 @@ name: lint build test
 
 on: push
 
+permissions:
+  contents: read
+
 jobs:
   lint-build-test:
     runs-on: ubuntu-22.04
