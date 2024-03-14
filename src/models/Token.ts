@@ -42,12 +42,12 @@ export class Token {
     const row = await dbClient.get(
       `select u.userId, u.email, u.username, u.blocked, u.validatedAt, u.admin, u.createdAt
             from
-                tokens t, 
+                tokens t,
                 users u
             where
                 t.userId = u.userId and
-                t.tokenHash = ? and 
-                t.shortToken = ? and 
+                t.tokenHash = ? and
+                t.shortToken = ? and
                 t.expiresAt > now()`,
       [tokenHash, shortToken]
     );

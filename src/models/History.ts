@@ -44,7 +44,7 @@ export class History {
     limit: number
   ) {
     const sql = `select id, clientId, userId, hostname, timestamp, data, createdAt
-        from history 
+        from history
         where userId = ?
             and hostname != ?
             and createdAt >= ?
