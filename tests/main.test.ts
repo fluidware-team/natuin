@@ -475,8 +475,7 @@ describe('natuin', () => {
         });
       });
       it('should allow an admin to register a user', async () => {
-        const url = `http://127.0.0.1:${port}/register`;
-        const res = await fetch(url, {
+        const res = await fetch(`http://127.0.0.1:${port}/register`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -508,6 +507,30 @@ describe('natuin', () => {
         assert.strictEqual(res.status, 200);
         assert.ok('session' in body);
         userToken = body.session;
+      });
+      it('should deny normal user to get /account/{user}', async () => {
+        const url = `http://127.0.0.1:${port}/account/test`;
+        const res = await fetch(url, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            authorization: `Token ${userToken}`
+          }
+        });
+        await res.json();
+        assert.strictEqual(res.status, 403);
+      });
+      it('should deny normal user to delete other users', async () => {
+        const url = `http://127.0.0.1:${port}/account/testanother`;
+        const res = await fetch(url, {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+            authorization: `Token ${userToken}`
+          }
+        });
+        await res.json();
+        assert.strictEqual(res.status, 403);
       });
       it('should deny double login', async () => {
         const url = `http://127.0.0.1:${port}/login`;
