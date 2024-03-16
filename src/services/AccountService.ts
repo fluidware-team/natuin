@@ -26,8 +26,13 @@ import { DbClient } from '@fluidware-it/mysql2-client';
 import { sendValidationEmail, sendResetPasswordEmail } from '../helper/mailerHelper';
 import { randomString } from '../utils/stringUtils';
 
+const RESERVED_USERNAMES = ['me', 'tokens', 'validate', 'password', 'forgot-password', 'reset-password'];
+
 export class AccountService {
   static async register(body: RegisterRequest): Promise<string> {
+    if (RESERVED_USERNAMES.includes(body.username)) {
+      throw new HTTPError('Invalid username', 400);
+    }
     const dbClient = getDbClient();
     let validationCode: string | undefined;
     if (Settings.emailRegistrationValidation) {

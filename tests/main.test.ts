@@ -269,7 +269,23 @@ describe('natuin', () => {
         afterAll(() => {
           Settings.openRegistration = false;
         });
-        it('should refuse to register a user if request is made by non-admin user', async () => {
+        it('should refuse to register a user with a reserved username', async () => {
+          const url = `http://127.0.0.1:${port}/register`;
+          const res = await fetch(url, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              email: 'test@example.com',
+              username: 'me',
+              password: 'anotherTestComplexPassword99'
+            })
+          });
+          await res.json();
+          assert.strictEqual(res.status, 400);
+        });
+        it('should refuse to register a user if request is authenticated and made by non-admin user', async () => {
           const url = `http://127.0.0.1:${port}/register`;
           const res = await fetch(url, {
             method: 'POST',
@@ -283,6 +299,7 @@ describe('natuin', () => {
             })
           });
           const body = await res.json();
+          assert.strictEqual(res.status, 200);
           const res2 = await fetch(url, {
             method: 'POST',
             headers: {
