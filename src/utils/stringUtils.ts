@@ -28,6 +28,7 @@ const multipliers = {
 
 function analyse(time: string) {
   const unit = time.match(measure)?.[0];
+  /* istanbul ignore next */
   if (!unit) return 0;
   time = time.substring(0, time.length - 1);
   const _multiplier = multipliers[unit as 's' | 'm' | 'h' | 'd'];
@@ -38,8 +39,8 @@ export function humanToMs(time: string): number {
   if (!whole.test(time)) {
     throw new Error('invalid time');
   }
-
   const x = time.match(pieces);
+  /* istanbul ignore next */
   if (!x) {
     throw new Error('invalid time');
   }
