@@ -15,11 +15,11 @@
  */
 
 import { Request, Response } from 'express';
-import { ChangePasswordRequest, LoginRequest, RegisterRequest, User } from '../types';
-import { getUserFromSession, returnError } from './ControllersUtils';
+import { ChangePasswordRequest, INVIATION_MODE, LoginRequest, RegisterRequest } from '../types';
+import { checkUserFromSession, getUserFromSession, returnError } from './ControllersUtils';
 import { AccountService } from '../services/AccountService';
-import { ensureError, getAsyncLocalStorageProp } from '@fluidware-it/saddlebag';
-import { HTTPError, MicroServiceStoreSymbols } from '@fluidware-it/express-microservice';
+import { ensureError } from '@fluidware-it/saddlebag';
+import { HTTPError } from '@fluidware-it/express-microservice';
 import { Settings } from '../Settings';
 import { checkDomain } from '../utils/registrationUtils';
 import { validatePassword } from '../utils/passwordUtils';
@@ -31,7 +31,7 @@ export async function getMe(req: Request, res: Response) {
 
 export async function register(req: Request, res: Response) {
   const body = req.body as RegisterRequest;
-  const user = getAsyncLocalStorageProp<User>(MicroServiceStoreSymbols.CONSUMER);
+  const user = checkUserFromSession();
   let err: HTTPError | null = null;
   if (user) {
     if (!user.isAdmin) {
@@ -62,7 +62,7 @@ export async function register(req: Request, res: Response) {
 }
 
 export async function login(req: Request, res: Response) {
-  const user = getAsyncLocalStorageProp(MicroServiceStoreSymbols.CONSUMER);
+  const user = checkUserFromSession();
   if (user) {
     returnError(new HTTPError('Already logged in', 400), res);
     return;
@@ -193,6 +193,41 @@ export async function blockUnblockUser(req: Request, res: Response) {
     res.json({
       username
     });
+  } catch (err) {
+    returnError(err, res);
+  }
+}
+
+export async function inviteAccount(req: Request, res: Response) {
+  if (Settings.invitationMode === INVIATION_MODE.CLOSE) {
+    returnError(new HTTPError('Method not allowed', 405), res);
+    return;
+  }
+  const user = getUserFromSession();
+  if (Settings.invitationMode === INVIATION_MODE.ADMIN_ONLY && !user.isAdmin) {
+    returnError(new HTTPError('Not authorized', 405), res);
+    return;
+  }
+  const { email } = req.body;
+  try {
+    await AccountService.invite(email, user);
+    res.sendStatus(200);
+  } catch (err) {
+    returnError(err, res);
+  }
+}
+
+export async function acceptInvite(req: Request, res: Response) {
+  const user = checkUserFromSession();
+  if (user) {
+    returnError(new HTTPError('Already logged in', 400), res);
+    return;
+  }
+  const { code, username, password } = req.body;
+  try {
+    validatePassword(password, Settings.passwordValidation);
+    await AccountService.acceptInvite(username, password, code);
+    res.json({});
   } catch (err) {
     returnError(err, res);
   }

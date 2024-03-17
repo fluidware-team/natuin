@@ -33,11 +33,15 @@ export function returnError(err: unknown, res: Response) {
   res.status(status).json({ status, reason: e.message });
 }
 
+export function checkUserFromSession() {
+  return getAsyncLocalStorageProp<User>(MicroServiceStoreSymbols.CONSUMER);
+}
+
 export function getUserFromSession() {
   const user = getAsyncLocalStorageProp<User>(MicroServiceStoreSymbols.CONSUMER);
   /* istanbul ignore next */
   if (!user) {
-    // we will never reach this point in production. middleware will throw an error earlier in the request
+    // we will never reach this point in production. validation middleware will throw an error earlier in the request
     throw new HTTPError('Not logged in', 401);
   }
   return user;

@@ -15,7 +15,7 @@
  */
 
 import { EnvParse } from '@fluidware-it/saddlebag';
-import { NatuinSettings } from './types';
+import { INVIATION_MODE, NatuinSettings } from './types';
 import { humanToMs } from './utils/stringUtils';
 
 function smtpSettings() {
@@ -38,6 +38,14 @@ function smtpSettings() {
   }
 }
 
+function checkInvitationMode(mode: string) {
+  if (mode === INVIATION_MODE.CLOSE || mode === INVIATION_MODE.OPEN || mode === INVIATION_MODE.ADMIN_ONLY) {
+    return mode;
+  } else {
+    throw new Error('Invalid invitation mode');
+  }
+}
+
 export const Settings: NatuinSettings = {
   adminToken: EnvParse.envStringOptional('ATUIN_ADMIN_TOKEN'),
   passwordValidation: {
@@ -53,6 +61,8 @@ export const Settings: NatuinSettings = {
     requireSpecial: EnvParse.envBool('ATUIN_PASSWORD_REQUIRE_SPECIAL', false)
   },
   openRegistration: EnvParse.envBool('ATUIN_OPEN_REGISTRATION', false),
+  // ATUIN_INVITATION_MODE: the invitation mode. one of 'close', 'open', 'admin-only'
+  invitationMode: checkInvitationMode(EnvParse.envString('ATUIN_INVITATION_MODE', 'close')),
   // ATUIN_REGISTRATION_EMAIL_DOMAINS_WHITELIST: comma separated list of email domains to allow registration
   emailDomainsWhitelist: EnvParse.envStringList<string>('ATUIN_REGISTRATION_EMAIL_DOMAINS_WHITELIST', []).filter(
     d => !!d

@@ -22,6 +22,7 @@ import { Settings } from '../src/Settings';
 import { setMailerTransporter } from '../src/helper/mailerHelper';
 import { createTransport } from 'nodemailer';
 import { setTimeout } from 'timers/promises';
+import { INVIATION_MODE } from '../src/types';
 
 function cleanEnvVars(envs: string[]) {
   envs.forEach(env => {
@@ -884,7 +885,6 @@ describe('natuin', () => {
           assert.ok('session' in loginBody);
         });
       });
-
       describe('email validation', () => {
         let token = '';
         let from = '';
@@ -1263,6 +1263,192 @@ describe('natuin', () => {
             })
           });
           assert.strictEqual(res4.status, 200);
+        });
+      });
+      describe('user invitation', () => {
+        let to = '';
+        let message = '';
+        const regex = /Your invitation code is (.*?)\\n/;
+        const transporter = createTransport({
+          jsonTransport: true
+        });
+        beforeAll(() => {
+          setMailerTransporter(transporter, (err, info) => {
+            to = info.envelope.to[0];
+            message = info.message;
+          });
+        });
+        describe('user invitation closed', () => {
+          beforeAll(() => {
+            Settings.invitationMode = INVIATION_MODE.CLOSE;
+          });
+          it('should refuse to register a user (unauth request)', async () => {
+            const res = await fetch(`http://127.0.0.1:${port}/account/invite`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                email: 'testinvite@example.com'
+              })
+            });
+            await res.text();
+            assert.strictEqual(res.status, 401);
+          });
+          it('should refuse to register a user (admin)', async () => {
+            const res = await fetch(`http://127.0.0.1:${port}/account/invite`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                authorization: `Token ${adminToken}`
+              },
+              body: JSON.stringify({
+                email: 'testinvite@example.com'
+              })
+            });
+            await res.text();
+            assert.strictEqual(res.status, 405);
+          });
+        });
+        async function adminInviteUser() {
+          let res = await fetch(`http://127.0.0.1:${port}/account/invite`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              authorization: `Token ${adminToken}`
+            },
+            body: JSON.stringify({
+              email: 'testinvite@example.com'
+            })
+          });
+          await res.text();
+          assert.strictEqual(res.status, 200);
+          await setTimeout(50);
+          assert.strictEqual(to, 'testinvite@example.com');
+          const match = message.match(regex);
+          const firstValidationCode = match ? match[1] : null;
+          assert.ok(firstValidationCode);
+          res = await fetch(`http://127.0.0.1:${port}/account/accept-invitation`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              authorization: `Token ${adminToken}`
+            },
+            body: JSON.stringify({
+              username: 'testinviteuser',
+              password: 'notcomplexpassword',
+              code: firstValidationCode
+            })
+          });
+          await res.json();
+          assert.strictEqual(res.status, 400);
+          res = await fetch(`http://127.0.0.1:${port}/account/accept-invitation`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              username: 'testinviteuser',
+              password: 'notcomplexpassword',
+              code: firstValidationCode
+            })
+          });
+          await res.json();
+          assert.strictEqual(res.status, 400);
+          res = await fetch(`http://127.0.0.1:${port}/account/accept-invitation`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              username: 'testinviteuser',
+              password: 'enoughComplexPassword1',
+              code: firstValidationCode
+            })
+          });
+          await res.json();
+          assert.strictEqual(res.status, 200);
+        }
+        describe('user invitation admin-only', () => {
+          let userToken = '';
+          beforeAll(() => {
+            Settings.invitationMode = INVIATION_MODE.ADMIN_ONLY;
+          });
+          afterAll(async () => {
+            Settings.invitationMode = INVIATION_MODE.CLOSE;
+            await fetch(`http://127.0.0.1:${port}/account`, {
+              method: 'DELETE',
+              headers: {
+                authorization: `Token ${userToken}`
+              }
+            });
+          });
+          it('should allow to invite a user (only admin user)', async () => {
+            await adminInviteUser();
+            let res = await fetch(`http://127.0.0.1:${port}/login`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                username: 'testinviteuser',
+                password: 'enoughComplexPassword1'
+              })
+            });
+            const loginBody = await res.json();
+            assert.strictEqual(res.status, 200);
+            assert.ok('session' in loginBody);
+            userToken = loginBody.session;
+            res = await fetch(`http://127.0.0.1:${port}/account/invite`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                authorization: `Token ${userToken}`
+              },
+              body: JSON.stringify({
+                email: 'testinvite2@example.com'
+              })
+            });
+            await res.text();
+            assert.strictEqual(res.status, 405);
+          });
+        });
+        describe('user invitation open', () => {
+          beforeAll(() => {
+            Settings.invitationMode = INVIATION_MODE.OPEN;
+          });
+          afterAll(() => {
+            Settings.invitationMode = INVIATION_MODE.CLOSE;
+          });
+          it('should allow to register a user (normal)', async () => {
+            await adminInviteUser();
+            let res = await fetch(`http://127.0.0.1:${port}/login`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                username: 'testinviteuser',
+                password: 'enoughComplexPassword1'
+              })
+            });
+            const loginBody = await res.json();
+            assert.strictEqual(res.status, 200);
+            assert.ok('session' in loginBody);
+            userToken = loginBody.session;
+            res = await fetch(`http://127.0.0.1:${port}/account/invite`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                authorization: `Token ${userToken}`
+              },
+              body: JSON.stringify({
+                email: 'testinvite3@example.com'
+              })
+            });
+            await res.text();
+            assert.strictEqual(res.status, 200);
+          });
         });
       });
     });

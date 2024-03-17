@@ -100,4 +100,41 @@ export class Account {
   static async blockUnblockUser(dbClient: DbClient, userId: string, block: boolean): Promise<void> {
     await dbClient.update('UPDATE users SET blocked = ? WHERE userId = ?', [block, userId]);
   }
+  static async getByEmail(dbClient: DbClient, email: string) {
+    const row = await dbClient.get('select userId, username, email from users where email = ?', [email]);
+    if (row) {
+      return {
+        userId: row.userId,
+        username: row.username,
+        email: row.email
+      };
+    }
+  }
+  static async getByUsername(dbClient: DbClient, username: string) {
+    const row = await dbClient.get('select userId, username, email from users where username = ?', [username]);
+    if (row) {
+      return {
+        userId: row.userId,
+        username: row.username,
+        email: row.email
+      };
+    }
+  }
+  static async invite(dbClient: DbClient, email: string, invitedBy: string, invitationCode: string): Promise<void> {
+    const sql =
+      'INSERT INTO users_invitations (email, invitedBy, code) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE code = value(code)';
+    await dbClient.insert(sql, [email, invitedBy, getSha256(invitationCode)]);
+  }
+  static async getInvitation(dbClient: DbClient, code: string) {
+    const row = await dbClient.get('select email, invitedBy from users_invitations where code = ?', [getSha256(code)]);
+    if (row) {
+      return {
+        email: row.email,
+        invitedBy: row.invitedBy
+      };
+    }
+  }
+  static async deleteInvitation(dbClient: DbClient, email: string): Promise<number> {
+    return dbClient.delete('DELETE FROM users_invitations WHERE email = ?', [email]);
+  }
 }

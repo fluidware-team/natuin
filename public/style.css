@@ -3,6 +3,7 @@ body {
     height: 100%;
 }
 
+.form-invite,
 .form-reset,
 .form-signin {
     max-width: 440px;
@@ -14,13 +15,17 @@ body {
     z-index: 2;
 }
 
+.form-invite #floatingCode {
+  margin-bottom: 10px;
+}
+
+.form-reset #floatingCode,
 #floatingUsername {
     margin-bottom: -1px;
     border-bottom-right-radius: 0;
     border-bottom-left-radius: 0;
 }
 
-.form-reset #floatingCode,
 .form-signin input[type="password"] {
     margin-bottom: -1px;
     border-radius: 0;
@@ -28,6 +33,7 @@ body {
 
 #floatingEmail,
 .form-reset input[type="password"],
+.form-invite input[type="password"],
 .form-signin #floatingCode {
     margin-bottom: 10px;
     border-top-left-radius: 0;

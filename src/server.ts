@@ -52,6 +52,11 @@ export class AtuinServer extends Microservice {
         title: 'natuin'
       });
     });
+    this.express.get('/account/accept-invite', (req: Request, res: Response) => {
+      res.render('account-accept-invite', {
+        title: 'natuin'
+      });
+    });
     this.express.get('/account/password-reset', (req: Request, res: Response) => {
       res.render('password-reset', {
         title: 'natuin'

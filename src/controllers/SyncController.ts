@@ -15,21 +15,15 @@
  */
 
 import { Request, Response } from 'express';
-import { getAsyncLocalStorageProp, getLogger } from '@fluidware-it/saddlebag';
-import { HTTPError, MicroServiceStoreSymbols } from '@fluidware-it/express-microservice';
+import { getLogger } from '@fluidware-it/saddlebag';
 import { getUserFromSession, returnError } from './ControllersUtils';
 import { SyncService } from '../services/SyncService';
-import { User } from '../types';
 import { ATUIN_API_VERSION } from '../Consts';
 import { Settings } from '../Settings';
 import { Focus } from '../types';
 
 export async function getCount(req: Request, res: Response) {
-  const user = getAsyncLocalStorageProp<User>(MicroServiceStoreSymbols.CONSUMER);
-  if (!user) {
-    returnError(new HTTPError('Not logged in', 401), res);
-    return;
-  }
+  const user = getUserFromSession();
   try {
     const count = await SyncService.getCount(user.id);
     res.json({ count });

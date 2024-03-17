@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { ChangePasswordRequest, LoginRequest, RegisterRequest, ValidateRequest } from '../types';
+import { ChangePasswordRequest, LoginRequest, RegisterRequest, User, ValidateRequest } from '../types';
 import { Settings } from '../Settings';
 import { HTTPError } from '@fluidware-it/express-microservice';
 import { getDbClient } from './ServiceUtils';
@@ -23,10 +23,19 @@ import { hashPassword } from '../utils/crypoUtils';
 import { Token } from '../models/Token';
 import { TokenItem } from '../types/token';
 import { DbClient } from '@fluidware-it/mysql2-client';
-import { sendValidationEmail, sendResetPasswordEmail } from '../helper/mailerHelper';
+import { sendValidationEmail, sendResetPasswordEmail, sendInvitationEmail } from '../helper/mailerHelper';
 import { randomString } from '../utils/stringUtils';
 
-const RESERVED_USERNAMES = ['me', 'tokens', 'validate', 'password', 'forgot-password', 'reset-password'];
+const RESERVED_USERNAMES = [
+  'me',
+  'tokens',
+  'validate',
+  'password',
+  'forgot-password',
+  'reset-password',
+  'invite',
+  'accept-invite'
+];
 
 export class AccountService {
   static async register(body: RegisterRequest): Promise<string> {
@@ -36,7 +45,7 @@ export class AccountService {
     const dbClient = getDbClient();
     let validationCode: string | undefined;
     if (Settings.emailRegistrationValidation) {
-      validationCode = Math.random().toString(36).substring(2, 15);
+      validationCode = randomString(32);
     }
     const userId = await Account.register(dbClient, body, validationCode);
     if (Settings.emailRegistrationValidation && validationCode) {
@@ -154,5 +163,30 @@ export class AccountService {
       return;
     }
     await Account.blockUnblockUser(dbClient, user.userId, block);
+  }
+
+  static async invite(email: string, invitedBy: User): Promise<void> {
+    const dbClient = getDbClient();
+    const user = await Account.getByEmail(dbClient, email);
+    if (user) {
+      // already registered
+      return;
+    }
+    const invitationCode = randomString(32);
+    await Account.invite(dbClient, email, invitedBy.username, invitationCode);
+    sendInvitationEmail(email, invitedBy, invitationCode);
+  }
+  static async acceptInvite(username: string, password: string, code: string): Promise<void> {
+    const dbClient = getDbClient();
+    const user = await Account.getByUsername(dbClient, username);
+    if (user) {
+      throw new HTTPError('Username already registered', 400);
+    }
+    const invitation = await Account.getInvitation(dbClient, code);
+    if (!invitation) {
+      throw new HTTPError('Invalid invitation code', 400);
+    }
+    await Account.register(dbClient, { username, password, email: invitation.email });
+    await Account.deleteInvitation(dbClient, invitation.email);
   }
 }

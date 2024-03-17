@@ -45,6 +45,14 @@ const CREATE_TABLE_USERS_RESET_REQUESTS = `create table if not exists users_rese
   CONSTRAINT fk_users_resets_user_id foreign key (userId) references users(userId) on delete cascade
 ) CHARACTER SET utf8 COLLATE utf8_general_ci`;
 
+const CREATE_TABLE_USERS_INVITATIONS = `create table if not exists users_invitations (
+  email varchar(255) binary not null primary key,
+  code varchar(64) binary not null,
+  createdAt datetime(3) not null default current_timestamp(3),
+  invitedBy varchar(255) not null,
+  unique uq_users_invitations_code (code)
+) CHARACTER SET utf8 COLLATE utf8_general_ci`;
+
 const CREATE_TABLE_TOKENS = `create table if not exists tokens (
   tokenHash varchar(64) binary not null primary key,
   shortToken varchar(64) binary not null,
@@ -96,6 +104,7 @@ export const onSchemaInit = async function (dbClient: DbClient) {
   await dbClient.run(CREATE_TABLE_USERS);
   await dbClient.run(CREATE_TABLE_USERS_RESET_REQUESTS);
   await dbClient.run(CREATE_TABLE_TOKENS);
+  await dbClient.run(CREATE_TABLE_USERS_INVITATIONS);
   await dbClient.run(CREATE_TABLE_HISTORY);
   await dbClient.run(CREATE_TABLE_STORE);
   await dbClient.run(CREATE_TABLE_COUNTERS);

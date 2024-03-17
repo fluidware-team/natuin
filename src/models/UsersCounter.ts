@@ -22,8 +22,7 @@ export class UsersCounter {
     return result?.sum || 0;
   }
   static async getStats(dbClient: DbClient) {
-    const result = await dbClient.get('select id, historyCount from counters');
-    return result;
+    return dbClient.get('select id, historyCount from counters');
   }
   static async align(dbClient: DbClient, userId: string): Promise<void> {
     await dbClient.update(

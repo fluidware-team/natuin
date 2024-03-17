@@ -11,6 +11,7 @@
 | ATUIN_DB_USERNAME                           |   string |                 atuin |          |                                                                                                  |
 | ATUIN_DISABLE_VERSION_CHECK                 |  boolean |                 false |          |                                                                                                  |
 | ATUIN_EMAIL_FROM                            |   string |    natuin@example.com |          | the email address to use as sender. required only if ATUIN_REGISTRATION_EMAIL_VALIDATION is true |
+| ATUIN_INVITATION_MODE                       |   string |                 close |          |                                        the invitation mode. one of 'close', 'open', 'admin-only' |
 | ATUIN_KEY_PREFIX                            |   string |                natuin |          |                                                                                                  |
 | ATUIN_OPEN_REGISTRATION                     |  boolean |                 false |          |                                                                                                  |
 | ATUIN_PAGE_SIZE                             |  integer |                  1100 |          |                                                                                                  |

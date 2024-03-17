@@ -477,6 +477,136 @@ paths:
               schema:
                 $ref: "#/components/schemas/InternalServerError"
 
+  /account/invite:
+    post:
+      summary: Send an invite. It depends on INVITATION_MODE setting
+      x-eov-operation-handler: AccountController
+      operationId: inviteAccount
+      tags:
+        - account
+      security:
+        - tokenAuth: [ ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+              properties:
+                email:
+                  type: string
+                  format: email
+      responses:
+        '200':
+          description: Expected response to a valid request
+        '400':
+          description: Invalid payload
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InvalidPayloadError"
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UnauthorizedError"
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ForbiddenError"
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotFoundError"
+        '405':
+          description: Method Not Allowed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MethodNotAllowedError"
+        '500':
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InternalServerError"
+
+  /account/accept-invitation:
+    post:
+      summary: Accept an invite
+      x-eov-operation-handler: AccountController
+      operationId: acceptInvite
+      tags:
+        - account
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - username
+                - code
+                - password
+              properties:
+                username:
+                  type: string
+                code:
+                  type: string
+                password:
+                  type: string
+                  format: password
+      responses:
+        '200':
+          description: Expected response to a valid request
+          content:
+            application/json:
+              schema:
+                type: object
+        '400':
+          description: Invalid payload
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InvalidPayloadError"
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UnauthorizedError"
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ForbiddenError"
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotFoundError"
+        '405':
+          description: Method Not Allowed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MethodNotAllowedError"
+        '500':
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InternalServerError"
+
   /account/{username}:
     parameters:
       - name: username
@@ -1398,6 +1528,15 @@ components:
               example: 404
             reason:
               example: Not Found
+    MethodNotAllowedError:
+      allOf:
+        - $ref: '#/components/schemas/BasicErrorModel'
+        - type: object
+          properties:
+            status:
+              example: 405
+            reason:
+              example: Method Not Allowed
     ConflictError:
       allOf:
         - $ref: '#/components/schemas/BasicErrorModel'

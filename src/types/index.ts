@@ -25,6 +25,14 @@ export interface PasswordRules {
   requireSpecial: boolean;
 }
 
+export const INVIATION_MODE = {
+  CLOSE: 'close',
+  OPEN: 'open',
+  ADMIN_ONLY: 'admin-only'
+} as const;
+
+export type INVITATION_MODE = (typeof INVIATION_MODE)[keyof typeof INVIATION_MODE];
+
 export interface NatuinSettings {
   adminToken?: string;
   openRegistration: boolean;
@@ -33,6 +41,7 @@ export interface NatuinSettings {
   emailRegistrationValidation: boolean;
   emailRegistrationValidationTimeout: number;
   sessionTTL: number;
+  invitationMode: INVITATION_MODE;
   pageSize: number;
   emailFrom: string;
   smtpSettings?: {

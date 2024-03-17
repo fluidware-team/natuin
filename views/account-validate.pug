@@ -12,7 +12,8 @@ html(lang='en', dir='ltr')
                 h1.h3.mb-3.fw-normal Your account has been validated
             #formblock
                 form(method='post', onsubmit='validate(); return false;')
-                    h1.h3.mb-3.fw-normal Please validate your account
+                    h1.h1.mb-3.fw-normal.text-center Welcome to Natuin!
+                    h2.h4.mb-3.fw-normal Please validate your account
                     .form-floating
                         input#floatingUsername.form-control(type='text' name="username" placeholder='macno', required='' autofocus='')
                         label(for='floatingUsername') Username
@@ -20,7 +21,7 @@ html(lang='en', dir='ltr')
                         input#floatingPassword.form-control(type='password' name="password" placeholder='Password', required='')
                         label(for='floatingPassword') Password
                     .form-floating
-                        input#floatingCode.form-control(type='text' name="code"  placeholder='PLUDF5RT', required='')
+                        input#floatingCode.form-control(type='text' name="code"  placeholder='PLUDF5RT', required='', autocomplete='off')
                         label(for='floatingCode') Validation code
                     button.btn.btn-primary.w-100.py-2(type='submit') Validate
                 #alertBlock.alert.alert-danger.d-none

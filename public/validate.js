@@ -27,10 +27,7 @@ function validate() {
       })
     })
     .then(res => {
-      if (res.ok) {
-        return res.json();
-      }
-      throw new Error(res.statusText);
+      return res.json();
     })
     .then(data => {
       if (data.reason) {

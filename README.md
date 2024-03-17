@@ -11,11 +11,11 @@ Natuin is an alternative to [atuin](https://atuin.sh) server
 - [ ] account management
   - [x] password reset
   - [ ] email change
-- [ ] registration
+- [x] registration
   - [x] email verification
   - [x] domain whitelist
   - [x] domain blacklist
-  - [ ] invite system
+  - [x] invite system
   - [x] password rules (min length, special characters, etc.)
 - [ ] session management via tokens
   - [x] token expiration

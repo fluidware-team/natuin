@@ -19,6 +19,7 @@ import { Settings } from '../Settings';
 import { getLogger } from '@fluidware-it/saddlebag';
 import { PUBLIC_URL } from '../Consts';
 import { compileFile, compileTemplate } from 'pug';
+import { User } from '../types';
 
 let transporter: Transporter;
 let callback: (err: Error | null, info: MessageInfo) => void;
@@ -88,6 +89,19 @@ export function sendResetPasswordEmail(to: string, username: string, resetCode: 
   const text = templates['resetPassword']({
     username,
     resetCode,
+    PUBLIC_URL
+  });
+  sendMail(to, subject, text);
+}
+
+export function sendInvitationEmail(to: string, inviter: User, invitationCode: string) {
+  const subject = '[natuin] You have been invited to join';
+  if (!templates['invitation']) {
+    templates['invitation'] = compileFile('templates/invitation.txt.pug');
+  }
+  const text = templates['invitation']({
+    inviter,
+    invitationCode,
     PUBLIC_URL
   });
   sendMail(to, subject, text);
