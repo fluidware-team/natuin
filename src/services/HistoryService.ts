@@ -14,19 +14,52 @@
  * limitations under the License.
  */
 
-import { History as HistoryApi } from '../types';
+import { History as HistoryApi, HistoryData } from '../types';
 import { History } from '../models/History';
 import { getDbClient } from './ServiceUtils';
 import { getLogger } from '@fluidware-it/saddlebag';
+import { Settings } from '../Settings';
+import { metrics } from '@opentelemetry/api';
+
+const meter = metrics.getMeter('natuin');
+const invalidDataCounter = meter.createCounter('app.data.invalid', {
+  description: 'The number of invalid data received'
+});
 
 export class HistoryService {
   static async addHistory(userId: string, history: HistoryApi[]) {
     const dbClient = getDbClient();
-    await History.add(dbClient, userId, history);
+    const logger = getLogger().child({ userId });
+    const historyClean = history.map(h => {
+      try {
+        const data = JSON.parse(h.data) as HistoryData;
+        if (Object.keys(data).length !== 2) {
+          logger.warn(`invalid data: ${Object.keys(data).join(',')}`);
+          h.data = '{}';
+          invalidDataCounter.add(1, { reason: 'invalid keys' });
+        } else if (!Array.isArray(data.ciphertext) || !Array.isArray(data.nonce)) {
+          logger.warn(`invalid data: ${Object.keys(data).join(',')}`);
+          h.data = '{}';
+          invalidDataCounter.add(1, { reason: 'invalid keys' });
+        } else {
+          if (Settings.maxHistoryDataSize > 0 && data.ciphertext.length > Settings.maxHistoryDataSize) {
+            logger.warn(`data too long: ${data.ciphertext.length} bytes  `);
+            h.data = '{}';
+            invalidDataCounter.add(1, { reason: 'invalid length' });
+          }
+        }
+      } catch (e) {
+        logger.warn('invalid data: not valid json');
+        h.data = '{}';
+        invalidDataCounter.add(1, { reason: 'invalid json' });
+      }
+      return h;
+    });
+    await History.add(dbClient, userId, historyClean);
   }
   static async deleteHistory(userId: string, clientId: string) {
     const dbClient = getDbClient();
     const count = await History.deleteHistory(dbClient, userId, clientId);
-    getLogger().info(`Deleted ${count} history items for ${clientId}`);
+    getLogger().info(`Deleted ${count} history item for ${userId}`);
   }
 }

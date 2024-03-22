@@ -1,12 +1,12 @@
 import { ensureError, getLogger } from '@fluidware-it/saddlebag';
-import { AtuinServer } from './server';
+import { NatuinServer } from './server';
 import { migrate } from './runMigration';
 import { startVersionChecker } from './helper/versionCheckerHelper';
 
 const logger = getLogger();
 logger.info('Starting app');
 
-const server = new AtuinServer({
+const server = new NatuinServer({
   maxUploadSize: '5mb'
 });
 

@@ -9,7 +9,7 @@ import { setAsyncLocalStorageProp } from '@fluidware-it/saddlebag';
 import { VERSION } from './version';
 import { sessionMiddleware } from './middlewares/sessionMiddleware';
 
-export class AtuinServer extends Microservice {
+export class NatuinServer extends Microservice {
   override setupPreLoggerMiddlewares() {
     this.express.use((req: Request, res: Response, next: NextFunction) => {
       res

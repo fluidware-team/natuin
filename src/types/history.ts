@@ -25,6 +25,11 @@ export interface History extends Omit<HistoryRequest, 'timestamp'> {
   timestamp: Date;
 }
 
+export interface HistoryData {
+  ciphertext: number[];
+  nonce: number[];
+}
+
 export interface DeleteHistoryRequest {
   client_id: string;
 }

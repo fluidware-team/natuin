@@ -40,7 +40,7 @@ COPY --chown=node:node ./public ./public
 COPY --chown=node:node ./views ./views
 COPY --chown=node:node ./templates ./templates
 
-RUN npm clean-install --omit=optional && \
+RUN npm clean-install --omit=dev --omit=optional && \
     npm cache clean --force && \
     rm -rf /home/node/.npm
 

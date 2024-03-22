@@ -20,7 +20,7 @@ import semver from 'semver';
 import { DbClient } from '@fluidware-it/mysql2-client';
 import { UsersCounter } from '../models/UsersCounter';
 
-const CHECK_UPDATE_URL = 'https://natuin.it/version';
+const CHECK_UPDATE_URL = 'https://update.natuin.fluidware.it/version';
 const CHECK_INTERVAL = 604800000; // 7days: 7 * 24 * 60 * 60 * 1000;
 const intervalGap = 3600000; // 1hour: 60 * 60 * 1000;
 let lastCheck = 0;

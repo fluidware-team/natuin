@@ -36,6 +36,7 @@ describe('Settings', () => {
       emailFrom: 'natuin@example.com',
       emailRegistrationValidation: false,
       emailRegistrationValidationTimeout: 86400000,
+      maxHistoryDataSize: 32768,
       invitationMode: 'close',
       openRegistration: false,
       pageSize: 1100,
@@ -75,6 +76,7 @@ describe('Settings', () => {
     process.env.ATUIN_SMTP_TLS_REJECT_UNAUTHORIZED = 'false';
     process.env.ATUIN_SMTP_USER = 'user';
     process.env.ATUIN_SMTP_TLS_REJECT_UNAUTHORIZED = 'false';
+    process.env.ATUIN_MAX_HISTORY_DATA_SIZE = '1024';
     const { Settings } = require('../src/Settings');
     assert.deepStrictEqual(Settings, {
       adminToken: 'adminToken',
@@ -85,6 +87,7 @@ describe('Settings', () => {
       emailRegistrationValidationTimeout: 172800000,
       invitationMode: 'open',
       openRegistration: true,
+      maxHistoryDataSize: 1024,
       pageSize: 100,
       passwordValidation: {
         minLength: 8,

@@ -17,7 +17,7 @@
 import * as assert from 'assert';
 import { MariaDBContainer, StartedMariaDBContainer } from './testcontainers/mariadb';
 import { getLogger } from '@fluidware-it/saddlebag';
-import { AtuinServer } from '../src/server';
+import { NatuinServer } from '../src/server';
 import { Settings } from '../src/Settings';
 import { setMailerTransporter } from '../src/helper/mailerHelper';
 import { createTransport } from 'nodemailer';
@@ -35,7 +35,7 @@ const adminToken = 'natuin_test_qwertyuiopasdfghjklzxcvbnm123456';
 describe('natuin', () => {
   jest.setTimeout(60_000);
   let container: StartedMariaDBContainer;
-  let server: AtuinServer;
+  let server: NatuinServer;
   let port: number;
   const requiredEnvVars = ['ATUIN_DB_NAME', 'ATUIN_DB_HOST', 'ATUIN_DB_PORT', 'ATUIN_DB_USERNAME', 'ATUIN_DB_PASSWORD'];
 
@@ -95,12 +95,12 @@ describe('natuin', () => {
     });
 
     describe('server', () => {
-      let server: AtuinServer;
+      let server: NatuinServer;
       let port: number;
       let userToken: string | null = null;
 
       beforeAll(async () => {
-        server = new AtuinServer({
+        server = new NatuinServer({
           port: 0
         });
         const ret = await server.start();
@@ -666,7 +666,7 @@ describe('natuin', () => {
             {
               id: 'clientId1',
               timestamp: '2024-03-10T02:22:17.946Z',
-              data: 'encrypted-history',
+              data: '{"ciphertext":[123,345],"nonce":[0,1,2]}',
               hostname: 'hostname1'
             }
           ])
@@ -718,7 +718,7 @@ describe('natuin', () => {
             {
               id: 'clientId1',
               timestamp: '2024-03-10T02:22:17.946Z',
-              data: 'encrypted-history',
+              data: '{"ciphertext":[123,345],"nonce":[0,1,2]}',
               hostname: 'hostname1'
             }
           ])
@@ -746,7 +746,7 @@ describe('natuin', () => {
         assert.strictEqual(res.status, 200);
         assert.strictEqual(body.history.length, 1);
         assert.strictEqual(typeof body.history[0], 'string');
-        assert.strictEqual(body.history[0], 'encrypted-history');
+        assert.strictEqual(body.history[0], '{"ciphertext":[123,345],"nonce":[0,1,2]}');
       });
 
       it('should return history stats', async () => {
@@ -786,7 +786,7 @@ describe('natuin', () => {
             {
               id: 'clientId2',
               timestamp: '2024-03-10T02:22:18.946Z',
-              data: 'encrypted-history',
+              data: '{"ciphertext":[123,345],"nonce":[0,1,2]}',
               hostname: 'hostname1'
             }
           ])
@@ -812,6 +812,144 @@ describe('natuin', () => {
         assert.strictEqual(resSync.status, 200);
         assert.strictEqual(bodySync.count, 2);
         assert.strictEqual(bodySync.deleted.length, 1);
+      });
+
+      it('should empty data value if data content is invalid (not json)', async () => {
+        let res = await fetch(`http://127.0.0.1:${port}/history`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Token ${userToken}`
+          },
+          body: JSON.stringify([
+            {
+              id: 'clientIdInvalid1',
+              timestamp: '2024-03-10T02:22:17.946Z',
+              data: 'some invalid data',
+              hostname: 'hostname2'
+            }
+          ])
+        });
+        const body = await res.text();
+        assert.strictEqual(res.status, 200);
+
+        const url = new URL(`http://127.0.0.1:${port}/sync/history`);
+        url.searchParams.set('host', 'hostname1');
+        url.searchParams.set('sync_ts', '2024-03-10T02:22:17.000Z');
+        url.searchParams.set('history_ts', '1970-01-01T00:00:00Z');
+        res = await fetch(url, {
+          headers: {
+            Authorization: `Token ${userToken}`
+          }
+        });
+        const bodyHistory = (await res.json()) as { history: string[] };
+        assert.strictEqual(res.status, 200);
+        assert.strictEqual(bodyHistory.history.length, 1);
+        assert.strictEqual(bodyHistory.history[0], '{}');
+      });
+
+      it('should empty data value if data content is invalid (less keys json)', async () => {
+        let res = await fetch(`http://127.0.0.1:${port}/history`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Token ${userToken}`
+          },
+          body: JSON.stringify([
+            {
+              id: 'clientIdInvalid1',
+              timestamp: '2024-03-10T02:24:17.946Z',
+              data: '{"something": "else"}',
+              hostname: 'hostname2'
+            }
+          ])
+        });
+        const body = await res.text();
+        assert.strictEqual(res.status, 200);
+
+        const url = new URL(`http://127.0.0.1:${port}/sync/history`);
+        url.searchParams.set('host', 'hostname1');
+        url.searchParams.set('sync_ts', '2024-03-10T02:24:17.000Z');
+        url.searchParams.set('history_ts', '1970-01-01T00:00:00Z');
+        res = await fetch(url, {
+          headers: {
+            Authorization: `Token ${userToken}`
+          }
+        });
+        const bodyHistory = (await res.json()) as { history: string[] };
+        assert.strictEqual(res.status, 200);
+        assert.strictEqual(bodyHistory.history.length, 1);
+        assert.strictEqual(bodyHistory.history[0], '{}');
+      });
+
+      it('should empty data value if data content is invalid (different keys json)', async () => {
+        let res = await fetch(`http://127.0.0.1:${port}/history`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Token ${userToken}`
+          },
+          body: JSON.stringify([
+            {
+              id: 'clientIdInvalid1',
+              timestamp: '2024-03-10T02:25:17.946Z',
+              data: '{"something": "else", "another": "thing"}',
+              hostname: 'hostname2'
+            }
+          ])
+        });
+        const body = await res.text();
+        assert.strictEqual(res.status, 200);
+
+        const url = new URL(`http://127.0.0.1:${port}/sync/history`);
+        url.searchParams.set('host', 'hostname1');
+        url.searchParams.set('sync_ts', '2024-03-10T02:25:17.000Z');
+        url.searchParams.set('history_ts', '1970-01-01T00:00:00Z');
+        res = await fetch(url, {
+          headers: {
+            Authorization: `Token ${userToken}`
+          }
+        });
+        const bodyHistory = (await res.json()) as { history: string[] };
+        assert.strictEqual(res.status, 200);
+        assert.strictEqual(bodyHistory.history.length, 1);
+        assert.strictEqual(bodyHistory.history[0], '{}');
+      });
+
+      it('should empty data value if data content is invalid (too long)', async () => {
+        const buffer: Buffer = Buffer.alloc(33 * 1024);
+        buffer.fill(1);
+        const data = { ciphertext: Array.from(buffer), nonce: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] };
+        let res = await fetch(`http://127.0.0.1:${port}/history`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Token ${userToken}`
+          },
+          body: JSON.stringify([
+            {
+              id: 'clientIdInvalid1',
+              timestamp: '2024-03-10T02:26:17.946Z',
+              data: JSON.stringify(data),
+              hostname: 'hostname2'
+            }
+          ])
+        });
+        const body = await res.text();
+        assert.strictEqual(res.status, 200);
+        const url = new URL(`http://127.0.0.1:${port}/sync/history`);
+        url.searchParams.set('host', 'hostname1');
+        url.searchParams.set('sync_ts', '2024-03-10T02:26:17.000Z');
+        url.searchParams.set('history_ts', '1970-01-01T00:00:00Z');
+        res = await fetch(url, {
+          headers: {
+            Authorization: `Token ${userToken}`
+          }
+        });
+        const bodyHistory = (await res.json()) as { history: string[] };
+        assert.strictEqual(res.status, 200);
+        assert.strictEqual(bodyHistory.history.length, 1);
+        assert.strictEqual(bodyHistory.history[0], '{}');
       });
 
       describe('change password', () => {

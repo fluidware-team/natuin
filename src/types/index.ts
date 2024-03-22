@@ -40,6 +40,7 @@ export interface NatuinSettings {
   emailDomainsBlacklist: string[];
   emailRegistrationValidation: boolean;
   emailRegistrationValidationTimeout: number;
+  maxHistoryDataSize: number;
   sessionTTL: number;
   invitationMode: INVITATION_MODE;
   pageSize: number;

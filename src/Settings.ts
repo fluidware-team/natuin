@@ -60,6 +60,8 @@ export const Settings: NatuinSettings = {
     // ATUIN_PASSWORD_REQUIRE_SPECIAL: require at least one special character
     requireSpecial: EnvParse.envBool('ATUIN_PASSWORD_REQUIRE_SPECIAL', false)
   },
+  // ATUIN_MAX_HISTORY_DATA_SIZE: the maximum size of the history data in bytes
+  maxHistoryDataSize: EnvParse.envInt('ATUIN_MAX_HISTORY_DATA_SIZE', 32768),
   openRegistration: EnvParse.envBool('ATUIN_OPEN_REGISTRATION', false),
   // ATUIN_INVITATION_MODE: the invitation mode. one of 'close', 'open', 'admin-only'
   invitationMode: checkInvitationMode(EnvParse.envString('ATUIN_INVITATION_MODE', 'close')),
