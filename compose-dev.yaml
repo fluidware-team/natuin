@@ -1,0 +1,43 @@
+---
+version: '3.9'
+
+x-default-logging: &logging
+  driver: "json-file"
+  options:
+    max-size: "5m"
+    max-file: "2"
+
+services:
+  mariadb:
+    image: mariadb:11.3.2
+    environment:
+      - MARIADB_ROOT_PASSWORD=rootpwd
+      - MARIADB_USER=${ATUIN_DB_USERNAME}
+      - MARIADB_PASSWORD=${ATUIN_DB_PASSWORD}
+      - MARIADB_DATABASE=${ATUIN_DB_NAME}
+      - MARIADB_UPGRADE=1
+    healthcheck:
+      test: mariadb-admin -u root -prootpwd status
+      interval: 10s
+      timeout: 10s
+      retries: 3
+    volumes:
+      - ./data/mariadb:/var/lib/mysql:Z
+    logging: *logging
+  natuin:
+    image: node:20.11.0-alpine3.19
+    entrypoint: /srv/app/docker-entrypoint-dev.sh
+    working_dir: /srv/app
+    depends_on:
+      mariadb:
+        condition: service_healthy
+    command: "npm run start:dev"
+    volumes:
+      - type: bind
+        source: ./
+        target: /srv/app
+      - ./data/npmcache:/srv/app/node_modules:Z
+    logging: *logging
+    ports:
+      - "127.0.0.1:8080:8080"
+      - "[::1]:8080:8080"

@@ -1,0 +1,11 @@
+**
+
+!.npmrc
+!package*.json
+!tsconfig*.json
+!src
+!scripts
+!openapi
+!public
+!views
+!templates
